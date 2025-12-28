@@ -1,6 +1,6 @@
 # Project Log & Next Steps
 
-**Last Updated**: December 28, 2024
+**Last Updated**: December 28, 2024 - 4:44 PM
 
 ## 📊 Project Status: Initial Setup Complete
 
@@ -32,6 +32,10 @@
 
 #### Project Structure Created
 ```
+✅ .claude/
+   ✅ agents/ - Specialized Claude Code agents
+   ✅ skills/ - Reusable development capabilities
+   ✅ settings.local.json - Claude Code settings
 ✅ app/
    ✅ _layout.tsx - Root layout with Clerk + Convex providers
    ✅ index.tsx - Home screen placeholder
@@ -90,6 +94,23 @@
 - ✅ `convex/README.md` - Convex-specific setup
 - ✅ `setup-convex.sh` - Interactive setup helper script
 - ✅ `PROJECT_LOG.md` - This file!
+
+#### Claude Code Configuration
+- ✅ `.claude/agents/` - Specialized agent configurations
+  - `agent-convex.md` - Clerk authentication + Convex integration patterns
+  - `agent-deployment.md` - EAS Build and EAS Submit workflows
+  - `agent-expo.md` - Expo React Native best practices
+- ✅ `.claude/skills/` - Reusable development skills
+  - `agent-creating/` - Creating custom agents
+  - `claude-command-builder/` - Command building patterns
+  - `expo-ios-designing/` - iOS-specific design guidelines
+  - `iOS Expert/` - Advanced iOS development
+  - `integrating-stripe-payments/` - Payment integration
+  - `ios-simulator-skill-main/` - iOS simulator workflows
+  - `researching-features/` - Feature research methodology
+  - `shadcn-ui-designing/` - UI component design
+  - `software-architecture/` - Architecture patterns
+  - `test-driven-development/` - TDD best practices
 
 #### Authentication & Providers Configured
 - ✅ Clerk provider setup in `app/_layout.tsx`
@@ -515,16 +536,17 @@ npx convex dev
 - **Setup Guide**: `SETUP.md`
 - **Quick Start**: `QUICKSTART.md`
 - **Claude Instructions**: `CLAUDE.md`
-- **Agents**: `agents/` directory
-- **Skills**: `skills/` directory
+- **Agents**: `.claude/agents/` directory
+- **Skills**: `.claude/skills/` directory
 
 ---
 
 ## 📊 Progress Tracker
 
-**Overall Completion**: ~5%
+**Overall Completion**: ~10%
 
 - ✅ Project Setup: 100%
+- ✅ Claude Code Configuration: 100% (agents & skills moved to `.claude/`)
 - ⏳ Services Configuration: 0%
 - ⏳ Nearby Bathrooms Feature: 0%
 - ⏳ Cleanliness Insights: 0%
@@ -532,6 +554,16 @@ npx convex dev
 - ⏳ Authentication: 0%
 - ⏳ Testing: 0%
 - ⏳ Production Build: 0%
+
+---
+
+## 📝 Recent Changes
+
+### December 28, 2024 - 4:44 PM
+- ✅ Moved `agents/` folder to `.claude/agents/`
+- ✅ Moved `skills/` folder to `.claude/skills/`
+- ✅ Updated project structure documentation
+- ✅ Verified all 3 agents and 10 skills are accessible to Claude Code
 
 ---
 
