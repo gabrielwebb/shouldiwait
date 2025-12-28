@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { ConvexReactClient } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
@@ -39,7 +39,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <ConvexProviderWithClerk client={convex} useAuth={() => ({ /* Clerk auth hook */ })}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
