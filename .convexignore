@@ -1,0 +1,8 @@
+# Convex ignores app files that use path aliases
+app/
+components/
+hooks/
+utils/
+constants/
+types/
+assets/

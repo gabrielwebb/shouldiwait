@@ -1,5 +1,22 @@
 # 🚀 Quick Start Guide
 
+## First Time? Verify Setup
+
+Run this first to check everything is configured:
+
+```bash
+./verify-phase-2.1.sh
+```
+
+This will verify:
+- All files are present
+- Dependencies are installed
+- Environment variables are set
+- TypeScript/Babel configuration is correct
+- Convex backend is initialized
+
+---
+
 ## Start Development
 
 You need **TWO terminal windows** open:
