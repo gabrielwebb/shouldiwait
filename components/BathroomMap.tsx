@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 import { getMapStyle, MAP_DELTAS, MAP_ANIMATION_DURATION } from '@/constants/MapStyles';
+import { getCleanlinessColor, getBackgroundColor, getTextColor, getBlue } from '@/constants/Colors';
 
 export interface BathroomLocation {
   _id: string;
@@ -136,14 +137,14 @@ export function BathroomMap({
                   style={[
                     styles.badge,
                     {
-                      backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                      backgroundColor: getBackgroundColor(isDark, true),
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      { color: isDark ? '#FFFFFF' : '#000000' },
+                      { color: getTextColor(isDark) },
                     ]}
                   >
                     {bathroom.avgCleanliness.toFixed(1)}
@@ -160,7 +161,7 @@ export function BathroomMap({
         style={({ pressed }) => [
           styles.recenterButton,
           {
-            backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+            backgroundColor: getBackgroundColor(isDark, true),
           },
           pressed && styles.recenterButtonPressed,
         ]}
@@ -178,14 +179,14 @@ export function BathroomMap({
           style={[
             styles.countBadge,
             {
-              backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+              backgroundColor: getBackgroundColor(isDark, true),
             },
           ]}
         >
           <Text
             style={[
               styles.countText,
-              { color: isDark ? '#0A84FF' : '#007AFF' },
+              { color: getBlue(isDark) },
             ]}
           >
             {bathrooms.length} {bathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby
@@ -200,14 +201,7 @@ export function BathroomMap({
  * Get marker color based on cleanliness rating
  */
 function getMarkerColor(avgCleanliness: number | undefined, isDark: boolean): string {
-  if (avgCleanliness === undefined) {
-    return isDark ? '#48484A' : '#8E8E93'; // Gray for unrated
-  }
-
-  // Color gradient from red (1.0) to green (5.0)
-  if (avgCleanliness >= 4.0) return '#34C759'; // iOS green
-  if (avgCleanliness >= 3.0) return '#FFD60A'; // iOS yellow
-  return '#FF453A'; // iOS red
+  return getCleanlinessColor(avgCleanliness);
 }
 
 const styles = StyleSheet.create({

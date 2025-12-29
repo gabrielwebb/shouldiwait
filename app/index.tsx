@@ -10,6 +10,7 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { getMockBathroomsNearby } from '@/constants/MockBathrooms';
 import { BathroomLocation } from '@/types';
 import * as Location from 'expo-location';
+import { getBackgroundColor, getTextColor, getBlue, Special, Yellow } from '@/constants/Colors';
 
 export default function Index() {
   const { location, error, loading, permissionStatus, requestPermission, refreshLocation } = useLocation();
@@ -38,13 +39,13 @@ export default function Index() {
   // Show loading state while checking permissions
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: getBackgroundColor(isDark) }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator
             size="large"
-            color={isDark ? '#0A84FF' : '#007AFF'}
+            color={getBlue(isDark)}
           />
-          <Text style={[styles.loadingText, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+          <Text style={[styles.loadingText, { color: getTextColor(isDark, 'secondary') }]}>
             Getting your location...
           </Text>
         </View>
@@ -69,14 +70,14 @@ export default function Index() {
 
   // Main app view with map
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: getBackgroundColor(isDark) }]} edges={['top']}>
       <View style={styles.content}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
-          <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+        <View style={[styles.header, { backgroundColor: getBackgroundColor(isDark) }]}>
+          <Text style={[styles.title, { color: getTextColor(isDark) }]}>
             Should I Wait? 🚽
           </Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+          <Text style={[styles.subtitle, { color: getTextColor(isDark, 'secondary') }]}>
             {nearbyBathrooms.length > 0
               ? `✨ ${nearbyBathrooms.length} clean ${nearbyBathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby`
               : 'Finding bathrooms nearby...'}
@@ -115,7 +116,7 @@ export default function Index() {
 
         {/* Error Display */}
         {error && (
-          <View style={[styles.errorBanner, { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }]}>
+          <View style={[styles.errorBanner, { backgroundColor: isDark ? Special.errorBackground.dark : Special.errorBackground.light }]}>
             <Text style={styles.errorIcon}>⚠️</Text>
             <Text style={[styles.errorText, { color: isDark ? '#FF6B6B' : '#DC2626' }]}>
               {error}

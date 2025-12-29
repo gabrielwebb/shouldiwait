@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { BathroomListItem } from './BathroomListItem';
 import { BathroomLocation } from '@/types';
+import { getTextColor, getBlue } from '@/constants/Colors';
 
 interface BathroomListProps {
   bathrooms: BathroomLocation[];
@@ -39,10 +40,10 @@ export function BathroomList({
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>🚻</Text>
-        <Text style={[styles.emptyTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+        <Text style={[styles.emptyTitle, { color: getTextColor(isDark) }]}>
           No Bathrooms Found
         </Text>
-        <Text style={[styles.emptyText, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
+        <Text style={[styles.emptyText, { color: getTextColor(isDark, 'tertiary') }]}>
           Try zooming out on the map or adjusting your location.
         </Text>
       </View>
@@ -63,9 +64,9 @@ export function BathroomList({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={isDark ? '#0A84FF' : '#007AFF'}
+            tintColor={getBlue(isDark)}
             title="Pull to refresh"
-            titleColor={isDark ? '#8E8E93' : '#8E8E93'}
+            titleColor={getTextColor(isDark, 'tertiary')}
           />
         ) : undefined
       }
@@ -73,7 +74,7 @@ export function BathroomList({
         bathrooms.length > 0 ? (
           <View style={styles.headerContainer}>
             <Text
-              style={[styles.headerText, { color: isDark ? '#8E8E93' : '#8E8E93' }]}
+              style={[styles.headerText, { color: getTextColor(isDark, 'tertiary') }]}
               accessible={true}
               accessibilityRole="header"
             >
@@ -87,7 +88,7 @@ export function BathroomList({
         bathrooms.length > 0 ? (
           <View style={styles.footerContainer}>
             <Text
-              style={[styles.footerText, { color: isDark ? '#8E8E93' : '#8E8E93' }]}
+              style={[styles.footerText, { color: getTextColor(isDark, 'tertiary') }]}
             >
               That's all the bathrooms within 5 miles
             </Text>

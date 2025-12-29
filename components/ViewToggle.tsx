@@ -13,6 +13,7 @@ import {
   Platform,
   useColorScheme,
 } from 'react-native';
+import { Yellow, getBackgroundColor, getTextColor } from '@/constants/Colors';
 
 interface ViewToggleProps {
   viewMode: 'map' | 'list';
@@ -23,17 +24,14 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const yellowAccent = '#FFD60A'; // iOS yellow
-  const yellowDark = '#FFC700';
-
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+    <View style={[styles.container, { backgroundColor: getBackgroundColor(isDark, true) }]}>
       {/* Map Button */}
       <Pressable
         style={[
           styles.button,
           viewMode === 'map' && styles.buttonActive,
-          viewMode === 'map' && { backgroundColor: yellowAccent },
+          viewMode === 'map' && { backgroundColor: Yellow.primary },
         ]}
         onPress={() => onToggle('map')}
         accessibilityRole="button"
@@ -48,7 +46,7 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
         </Text>
         <Text style={[
           styles.buttonText,
-          { color: viewMode === 'map' ? '#000000' : (isDark ? '#8E8E93' : '#8E8E93') },
+          { color: viewMode === 'map' ? '#000000' : getTextColor(isDark, 'tertiary') },
           viewMode === 'map' && styles.buttonTextActive,
         ]}>
           Map
@@ -60,7 +58,7 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
         style={[
           styles.button,
           viewMode === 'list' && styles.buttonActive,
-          viewMode === 'list' && { backgroundColor: yellowAccent },
+          viewMode === 'list' && { backgroundColor: Yellow.primary },
         ]}
         onPress={() => onToggle('list')}
         accessibilityRole="button"
@@ -75,7 +73,7 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
         </Text>
         <Text style={[
           styles.buttonText,
-          { color: viewMode === 'list' ? '#000000' : (isDark ? '#8E8E93' : '#8E8E93') },
+          { color: viewMode === 'list' ? '#000000' : getTextColor(isDark, 'tertiary') },
           viewMode === 'list' && styles.buttonTextActive,
         ]}>
           List

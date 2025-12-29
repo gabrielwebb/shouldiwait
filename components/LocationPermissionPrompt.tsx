@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, Linking, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
+import { getBackgroundColor, getTextColor, getBlue, Special } from '@/constants/Colors';
 
 interface LocationPermissionPromptProps {
   permissionStatus: Location.PermissionStatus | null;
@@ -33,22 +34,22 @@ export function LocationPermissionPrompt({
   // Permission denied - show settings prompt
   if (permissionStatus === Location.PermissionStatus.DENIED) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: getBackgroundColor(isDark) }]}>
         <View style={styles.content}>
-          <View style={[styles.card, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+          <View style={[styles.card, { backgroundColor: getBackgroundColor(isDark, true) }]}>
             <Text style={styles.icon} accessibilityLabel="Location icon">📍</Text>
             <Text
-              style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}
+              style={[styles.title, { color: getTextColor(isDark) }]}
               accessible={true}
               accessibilityRole="header"
             >
               Location Access Needed
             </Text>
-            <Text style={[styles.message, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+            <Text style={[styles.message, { color: getTextColor(isDark, 'secondary') }]}>
               To find bathrooms near you, please enable location access in your device settings.
             </Text>
             {error && (
-              <View style={[styles.errorContainer, { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }]}>
+              <View style={[styles.errorContainer, { backgroundColor: isDark ? Special.errorBackground.dark : Special.errorBackground.light }]}>
                 <Text style={[styles.error, { color: isDark ? '#FF6B6B' : '#DC2626' }]}>{error}</Text>
               </View>
             )}
@@ -77,23 +78,23 @@ export function LocationPermissionPrompt({
 
   // Permission not yet requested - show request prompt
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: getBackgroundColor(isDark) }]}>
       <View style={styles.content}>
-        <View style={[styles.card, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+        <View style={[styles.card, { backgroundColor: getBackgroundColor(isDark, true) }]}>
           <Text style={styles.icon} accessibilityLabel="Location icon">📍</Text>
           <Text
-            style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}
+            style={[styles.title, { color: getTextColor(isDark) }]}
             accessible={true}
             accessibilityRole="header"
           >
             Find Clean Bathrooms Nearby
           </Text>
-          <Text style={[styles.message, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+          <Text style={[styles.message, { color: getTextColor(isDark, 'secondary') }]}>
             We'll use your location to show the cleanest bathrooms around you. Your location is only
             used while you're using the app.
           </Text>
           {error && (
-            <View style={[styles.errorContainer, { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }]}>
+            <View style={[styles.errorContainer, { backgroundColor: isDark ? Special.errorBackground.dark : Special.errorBackground.light }]}>
               <Text style={[styles.error, { color: isDark ? '#FF6B6B' : '#DC2626' }]}>{error}</Text>
             </View>
           )}
@@ -114,7 +115,7 @@ export function LocationPermissionPrompt({
               Enable Location
             </Text>
           </Pressable>
-          <Text style={[styles.privacyNote, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
+          <Text style={[styles.privacyNote, { color: getTextColor(isDark, 'tertiary') }]}>
             🔒 We respect your privacy. Location data is never stored or shared.
           </Text>
         </View>
@@ -188,10 +189,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButton: {
-    backgroundColor: '#007AFF', // iOS system blue
+    backgroundColor: '#007AFF', // iOS system blue (light mode)
   },
   darkButton: {
-    backgroundColor: '#0A84FF', // iOS dark mode blue
+    backgroundColor: '#0A84FF', // iOS system blue (dark mode)
   },
   buttonPressed: {
     opacity: 0.7,

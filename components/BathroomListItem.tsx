@@ -17,6 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import { BathroomLocation } from '@/types';
+import { Yellow, getCleanlinessColor, getBackgroundColor, getTextColor, getBlue, Gray } from '@/constants/Colors';
 
 interface BathroomListItemProps {
   bathroom: BathroomLocation;
@@ -28,12 +29,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
   const isDark = colorScheme === 'dark';
 
   // Get color based on cleanliness rating
-  const getRatingColor = () => {
-    if (!bathroom.avgCleanliness) return isDark ? '#48484A' : '#8E8E93';
-    if (bathroom.avgCleanliness >= 4.0) return '#34C759'; // Green
-    if (bathroom.avgCleanliness >= 3.0) return '#FFD60A'; // Yellow
-    return '#FF453A'; // Red
-  };
+  const ratingColor = getCleanlinessColor(bathroom.avgCleanliness);
 
   // Open navigation in Apple Maps (iOS) or Google Maps (Android)
   const handleNavigate = () => {
@@ -54,7 +50,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+          backgroundColor: getBackgroundColor(isDark, true),
         },
         pressed && styles.pressed,
       ]}
@@ -67,13 +63,13 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
       <View style={styles.topRow}>
         <View style={styles.nameContainer}>
           <Text
-            style={[styles.name, { color: isDark ? '#FFFFFF' : '#000000' }]}
+            style={[styles.name, { color: getTextColor(isDark) }]}
             numberOfLines={1}
           >
             {bathroom.name}
           </Text>
           <Text
-            style={[styles.placeType, { color: isDark ? '#8E8E93' : '#8E8E93' }]}
+            style={[styles.placeType, { color: getTextColor(isDark, 'tertiary') }]}
             numberOfLines={1}
           >
             {formatPlaceType(bathroom.placeType)}
@@ -85,11 +81,11 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
           <View
             style={[
               styles.ratingBadge,
-              { backgroundColor: getRatingColor() + '20' },
+              { backgroundColor: ratingColor + '20' },
             ]}
           >
             <Text
-              style={[styles.ratingText, { color: getRatingColor() }]}
+              style={[styles.ratingText, { color: ratingColor }]}
               accessible={true}
               accessibilityLabel={`Cleanliness rating ${bathroom.avgCleanliness.toFixed(1)} out of 5`}
             >
@@ -105,7 +101,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
           <View style={styles.distanceContainer}>
             <Text style={styles.distanceIcon}>📍</Text>
             <Text
-              style={[styles.distance, { color: isDark ? '#0A84FF' : '#007AFF' }]}
+              style={[styles.distance, { color: getBlue(isDark) }]}
               accessible={true}
               accessibilityLabel={`${bathroom.distance} miles away`}
             >
@@ -116,7 +112,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
 
         {bathroom.totalRatings !== undefined && bathroom.totalRatings > 0 && (
           <Text
-            style={[styles.totalRatings, { color: isDark ? '#8E8E93' : '#8E8E93' }]}
+            style={[styles.totalRatings, { color: getTextColor(isDark, 'tertiary') }]}
           >
             • {bathroom.totalRatings} {bathroom.totalRatings === 1 ? 'rating' : 'ratings'}
           </Text>
@@ -125,7 +121,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
 
       {/* Address */}
       <Text
-        style={[styles.address, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}
+        style={[styles.address, { color: getTextColor(isDark, 'secondary') }]}
         numberOfLines={1}
       >
         {bathroom.address}
@@ -140,17 +136,17 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
               style={[
                 styles.amenityBadge,
                 {
-                  backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7',
+                  backgroundColor: isDark ? Gray.dark.elevated2 : Gray.light.background,
                 },
               ]}
             >
-              <Text style={[styles.amenityText, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+              <Text style={[styles.amenityText, { color: getTextColor(isDark, 'secondary') }]}>
                 {formatAmenity(amenity)}
               </Text>
             </View>
           ))}
           {bathroom.amenities.length > 3 && (
-            <Text style={[styles.moreAmenities, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
+            <Text style={[styles.moreAmenities, { color: getTextColor(isDark, 'tertiary') }]}>
               +{bathroom.amenities.length - 3} more
             </Text>
           )}
@@ -162,7 +158,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
         style={({ pressed }) => [
           styles.navigateButton,
           {
-            backgroundColor: '#FFD60A', // Yellow accent!
+            backgroundColor: Yellow.primary,
           },
           pressed && styles.navigateButtonPressed,
         ]}
