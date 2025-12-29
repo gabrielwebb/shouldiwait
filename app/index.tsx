@@ -5,20 +5,34 @@ import { StatusBar } from 'expo-status-bar';
 import { useLocation } from '@/hooks/useLocation';
 import { LocationPermissionPrompt } from '@/components/LocationPermissionPrompt';
 import { BathroomMap } from '@/components/BathroomMap';
+import { BathroomList } from '@/components/BathroomList';
 import { getMockBathroomsNearby } from '@/constants/MockBathrooms';
 import { BathroomLocation } from '@/types';
 import * as Location from 'expo-location';
 
 export default function Index() {
-  const { location, error, loading, permissionStatus, requestPermission } = useLocation();
+  const { location, error, loading, permissionStatus, requestPermission, refreshLocation } = useLocation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedBathroom, setSelectedBathroom] = useState<BathroomLocation | null>(null);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list'); // Start with list view
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get nearby bathrooms based on user location
   const nearbyBathrooms = location
     ? getMockBathroomsNearby(location.latitude, location.longitude, 5)
     : [];
+
+  // Handle pull-to-refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (refreshLocation) {
+      await refreshLocation();
+    }
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsRefreshing(false);
+  };
 
   // Show loading state while checking permissions
   if (loading) {
@@ -68,20 +82,31 @@ export default function Index() {
           </Text>
         </View>
 
-        {/* Map View */}
-        <View style={styles.mapContainer}>
-          <BathroomMap
-            userLocation={location}
-            bathrooms={nearbyBathrooms}
-            onMarkerPress={(bathroom) => {
-              setSelectedBathroom(bathroom);
-              // TODO: Show bathroom details sheet
-              console.log('Selected bathroom:', bathroom.name);
-            }}
-            onMapPress={() => {
-              setSelectedBathroom(null);
-            }}
-          />
+        {/* List View or Map View */}
+        <View style={styles.viewContainer}>
+          {viewMode === 'list' ? (
+            <BathroomList
+              bathrooms={nearbyBathrooms}
+              onRefresh={handleRefresh}
+              refreshing={isRefreshing}
+              onBathroomPress={(bathroom) => {
+                setSelectedBathroom(bathroom);
+                console.log('Selected bathroom:', bathroom.name);
+              }}
+            />
+          ) : (
+            <BathroomMap
+              userLocation={location}
+              bathrooms={nearbyBathrooms}
+              onMarkerPress={(bathroom) => {
+                setSelectedBathroom(bathroom);
+                console.log('Selected bathroom:', bathroom.name);
+              }}
+              onMapPress={() => {
+                setSelectedBathroom(null);
+              }}
+            />
+          )}
         </View>
 
         {/* Error Display */}
@@ -132,12 +157,8 @@ const styles = StyleSheet.create({
     fontSize: Platform.select({ ios: 15, android: 14 }),
     fontWeight: '500',
   },
-  mapContainer: {
+  viewContainer: {
     flex: 1,
-    borderTopLeftRadius: Platform.select({ ios: 20, android: 16 }),
-    borderTopRightRadius: Platform.select({ ios: 20, android: 16 }),
-    overflow: 'hidden',
-    marginTop: 8,
   },
   errorBanner: {
     position: 'absolute',
