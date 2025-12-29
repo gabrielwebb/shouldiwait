@@ -55,12 +55,6 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Should I Wait? to use your location to find nearby bathrooms."
         }
-      ],
-      [
-        "react-native-maps",
-        {
-          "enableGoogleMaps": false
-        }
       ]
     ],
     "experiments": {
