@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Linking, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 
 interface LocationPermissionPromptProps {
@@ -13,6 +14,9 @@ export function LocationPermissionPrompt({
   onRequestPermission,
   error,
 }: LocationPermissionPromptProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const handleOpenSettings = () => {
     if (Platform.OS === 'ios') {
       Linking.openURL('app-settings:');
@@ -29,55 +33,93 @@ export function LocationPermissionPrompt({
   // Permission denied - show settings prompt
   if (permissionStatus === Location.PermissionStatus.DENIED) {
     return (
-      <View style={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.icon}>📍</Text>
-          <Text style={styles.title}>Location Access Needed</Text>
-          <Text style={styles.message}>
-            To find bathrooms near you, please enable location access in your device settings.
-          </Text>
-          {error && <Text style={styles.error}>{error}</Text>}
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              styles.primaryButton,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleOpenSettings}
-          >
-            <Text style={styles.primaryButtonText}>Open Settings</Text>
-          </Pressable>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+        <View style={styles.content}>
+          <View style={[styles.card, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+            <Text style={styles.icon} accessibilityLabel="Location icon">📍</Text>
+            <Text
+              style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}
+              accessible={true}
+              accessibilityRole="header"
+            >
+              Location Access Needed
+            </Text>
+            <Text style={[styles.message, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+              To find bathrooms near you, please enable location access in your device settings.
+            </Text>
+            {error && (
+              <View style={[styles.errorContainer, { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }]}>
+                <Text style={[styles.error, { color: isDark ? '#FF6B6B' : '#DC2626' }]}>{error}</Text>
+              </View>
+            )}
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                styles.primaryButton,
+                pressed && styles.buttonPressed,
+                isDark && styles.darkButton,
+              ]}
+              onPress={handleOpenSettings}
+              accessible={true}
+              accessibilityLabel="Open Settings"
+              accessibilityHint="Opens your device settings to enable location access"
+              accessibilityRole="button"
+            >
+              <Text style={[styles.primaryButtonText, isDark && { color: '#FFFFFF' }]}>
+                Open Settings
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // Permission not yet requested - show request prompt
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.icon}>📍</Text>
-        <Text style={styles.title}>Find Bathrooms Near You</Text>
-        <Text style={styles.message}>
-          We need your location to show nearby clean bathrooms. Your location is only used while
-          you're using the app.
-        </Text>
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={onRequestPermission}
-        >
-          <Text style={styles.primaryButtonText}>Allow Location Access</Text>
-        </Pressable>
-        <Text style={styles.privacyNote}>
-          We respect your privacy. Location data is never stored or shared.
-        </Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+      <View style={styles.content}>
+        <View style={[styles.card, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+          <Text style={styles.icon} accessibilityLabel="Location icon">📍</Text>
+          <Text
+            style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Find Clean Bathrooms Nearby
+          </Text>
+          <Text style={[styles.message, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
+            We'll use your location to show the cleanest bathrooms around you. Your location is only
+            used while you're using the app.
+          </Text>
+          {error && (
+            <View style={[styles.errorContainer, { backgroundColor: isDark ? '#3A1A1A' : '#FEF2F2' }]}>
+              <Text style={[styles.error, { color: isDark ? '#FF6B6B' : '#DC2626' }]}>{error}</Text>
+            </View>
+          )}
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+              isDark && styles.darkButton,
+            ]}
+            onPress={onRequestPermission}
+            accessible={true}
+            accessibilityLabel="Enable location services"
+            accessibilityHint="Allows the app to show nearby bathrooms"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.primaryButtonText, isDark && { color: '#FFFFFF' }]}>
+              Enable Location
+            </Text>
+          </Pressable>
+          <Text style={[styles.privacyNote, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
+            🔒 We respect your privacy. Location data is never stored or shared.
+          </Text>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -86,73 +128,85 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
+  },
+  content: {
+    width: '100%',
+    maxWidth: 400,
+    paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    maxWidth: 400,
-    width: '100%',
+    borderRadius: Platform.select({ ios: 20, android: 16 }),
+    padding: Platform.select({ ios: 32, android: 24 }),
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   icon: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 72,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    fontSize: Platform.select({ ios: 28, android: 24 }),
+    fontWeight: '700',
     marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: Platform.select({ ios: -0.5, android: 0 }),
   },
   message: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: Platform.select({ ios: 17, android: 16 }),
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
+    lineHeight: Platform.select({ ios: 22, android: 24 }),
+    marginBottom: 28,
+  },
+  errorContainer: {
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    width: '100%',
   },
   error: {
     fontSize: 14,
-    color: '#dc2626',
     textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    fontWeight: '500',
   },
   button: {
-    paddingVertical: 16,
+    paddingVertical: Platform.select({ ios: 16, android: 14 }),
     paddingHorizontal: 32,
-    borderRadius: 12,
-    minWidth: 200,
+    borderRadius: Platform.select({ ios: 12, android: 8 }),
+    minWidth: 240,
+    minHeight: 50, // iOS minimum tap target
     alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#007AFF', // iOS system blue
+  },
+  darkButton: {
+    backgroundColor: '#0A84FF', // iOS dark mode blue
   },
   buttonPressed: {
-    opacity: 0.8,
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: Platform.select({ ios: 17, android: 16 }),
     fontWeight: '600',
+    letterSpacing: Platform.select({ ios: -0.4, android: 0 }),
   },
   privacyNote: {
-    fontSize: 12,
-    color: '#999999',
+    fontSize: Platform.select({ ios: 13, android: 12 }),
     textAlign: 'center',
-    marginTop: 16,
-    fontStyle: 'italic',
+    marginTop: 20,
+    lineHeight: 18,
   },
 });
