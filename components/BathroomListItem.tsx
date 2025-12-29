@@ -162,7 +162,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
         style={({ pressed }) => [
           styles.navigateButton,
           {
-            backgroundColor: isDark ? '#0A84FF' : '#007AFF',
+            backgroundColor: '#FFD60A', // Yellow accent!
           },
           pressed && styles.navigateButtonPressed,
         ]}
@@ -172,7 +172,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
         accessibilityLabel={`Get directions to ${bathroom.name}`}
       >
         <Text style={styles.navigateIcon}>🧭</Text>
-        <Text style={styles.navigateText}>Directions</Text>
+        <Text style={[styles.navigateText, { color: '#000000' }]}>Go</Text>
       </Pressable>
     </Pressable>
   );

@@ -3,6 +3,23 @@
  *
  * Sample bathroom locations in San Francisco area for development and testing.
  * These will be replaced with real data from Convex once the backend is populated.
+ *
+ * USE CASES SUPPORTED:
+ * 1. 🚗 "Oh shit, what's close by?" (Driving/urgent)
+ *    - Shows nearest bathrooms within 5 miles, sorted by distance
+ *    - Perfect for road trips, emergencies
+ *
+ * 2. 🏰 "Where's the best in this place?" (Disney World, malls, airports)
+ *    - Multiple bathrooms at same venue (0.1-0.5 miles apart)
+ *    - Sorted by rating AND distance
+ *    - Map view shows all options visually
+ *    - User picks cleanest without walking across entire park/mall
+ *
+ * EXAMPLE: Disney World Magic Kingdom would have:
+ * - Main Street USA Bathroom (4.8★, near entrance)
+ * - Tomorrowland Bathroom (3.2★, by Space Mountain)
+ * - Frontierland Bathroom (4.5★, by Big Thunder)
+ * User sees all 3 on map, picks Main Street (highest rating, closest)
  */
 
 import { BathroomLocation } from '@/types';

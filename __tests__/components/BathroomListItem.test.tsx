@@ -72,7 +72,7 @@ describe('BathroomListItem', () => {
 
     it('should render Directions button', () => {
       const { getByText } = render(<BathroomListItem bathroom={mockBathroom} />);
-      expect(getByText('Directions')).toBeTruthy();
+      expect(getByText('Go')).toBeTruthy();
     });
   });
 
@@ -139,7 +139,7 @@ describe('BathroomListItem', () => {
     it('should open Apple Maps on iOS when Directions button is pressed', () => {
       const { getByText } = render(<BathroomListItem bathroom={mockBathroom} />);
 
-      const directionsButton = getByText('Directions');
+      const directionsButton = getByText('Go');
       fireEvent.press(directionsButton);
 
       expect(Linking.openURL).toHaveBeenCalledWith(
@@ -165,7 +165,7 @@ describe('BathroomListItem', () => {
 
       const { getByText } = render(<BathroomListItem bathroom={mockBathroom} />);
 
-      const directionsButton = getByText('Directions');
+      const directionsButton = getByText('Go');
       fireEvent.press(directionsButton);
 
       expect(Linking.openURL).toHaveBeenCalledWith(
@@ -185,7 +185,7 @@ describe('BathroomListItem', () => {
     it('should include bathroom name in navigation URL', () => {
       const { getByText } = render(<BathroomListItem bathroom={mockBathroom} />);
 
-      const directionsButton = getByText('Directions');
+      const directionsButton = getByText('Go');
       fireEvent.press(directionsButton);
 
       expect(Linking.openURL).toHaveBeenCalledWith(
@@ -213,7 +213,7 @@ describe('BathroomListItem', () => {
         <BathroomListItem bathroom={mockBathroom} onPress={onPress} />
       );
 
-      const directionsButton = getByText('Directions');
+      const directionsButton = getByText('Go');
       fireEvent.press(directionsButton);
 
       // Directions button should not trigger card onPress

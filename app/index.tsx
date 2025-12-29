@@ -6,6 +6,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { LocationPermissionPrompt } from '@/components/LocationPermissionPrompt';
 import { BathroomMap } from '@/components/BathroomMap';
 import { BathroomList } from '@/components/BathroomList';
+import { ViewToggle } from '@/components/ViewToggle';
 import { getMockBathroomsNearby } from '@/constants/MockBathrooms';
 import { BathroomLocation } from '@/types';
 import * as Location from 'expo-location';
@@ -73,14 +74,17 @@ export default function Index() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
           <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-            Should I Wait?
+            Should I Wait? 🚽
           </Text>
           <Text style={[styles.subtitle, { color: isDark ? '#EBEBF5' : '#3C3C43' }]}>
             {nearbyBathrooms.length > 0
-              ? `${nearbyBathrooms.length} clean ${nearbyBathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby`
+              ? `✨ ${nearbyBathrooms.length} clean ${nearbyBathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby`
               : 'Finding bathrooms nearby...'}
           </Text>
         </View>
+
+        {/* View Toggle */}
+        <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
 
         {/* List View or Map View */}
         <View style={styles.viewContainer}>
