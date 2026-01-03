@@ -16,23 +16,28 @@ import {
   useColorScheme,
   Linking,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { BathroomLocation } from '@/types';
 import { Yellow, getCleanlinessColor, getBackgroundColor, getTextColor, getBlue, Gray } from '@/constants/Colors';
+import { CleanlinessInsightsCard } from '@/components/insights/CleanlinessInsightsCard';
 
 interface BathroomListItemProps {
   bathroom: BathroomLocation;
   onPress?: (bathroom: BathroomLocation) => void;
+  showInsights?: boolean;
 }
 
-export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
+export function BathroomListItem({ bathroom, onPress, showInsights = false }: BathroomListItemProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const router = useRouter();
 
   // Get color based on cleanliness rating
   const ratingColor = getCleanlinessColor(bathroom.avgCleanliness);
 
   // Open navigation in Apple Maps (iOS) or Google Maps (Android)
-  const handleNavigate = () => {
+  const handleNavigate = (e: any) => {
+    e.stopPropagation(); // Prevent card press
     const label = encodeURIComponent(bathroom.name);
     const url = Platform.select({
       ios: `maps:0,0?q=${label}@${bathroom.latitude},${bathroom.longitude}`,
@@ -45,6 +50,15 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
     );
   };
 
+  // Navigate to detail screen
+  const handleCardPress = () => {
+    if (onPress) {
+      onPress(bathroom);
+    }
+    // Navigate to detail screen
+    router.push(`/bathroom/${bathroom._id}` as any);
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -54,7 +68,7 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
         },
         pressed && styles.pressed,
       ]}
-      onPress={() => onPress?.(bathroom)}
+      onPress={handleCardPress}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={`${bathroom.name}, ${bathroom.distance} miles away, rated ${bathroom.avgCleanliness || 'unrated'}`}
@@ -151,6 +165,11 @@ export function BathroomListItem({ bathroom, onPress }: BathroomListItemProps) {
             </Text>
           )}
         </View>
+      )}
+
+      {/* Compact Insights (if enabled) */}
+      {showInsights && bathroom._id && (
+        <CleanlinessInsightsCard locationId={bathroom._id as any} compact />
       )}
 
       {/* Navigate Button */}

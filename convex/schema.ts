@@ -39,10 +39,50 @@ export default defineSchema({
 
   cleanlinessInsights: defineTable({
     locationId: v.id("locations"),
+
+    // Overall metrics
     avgCleanliness: v.number(),
     totalRatings: v.number(),
-    peakCleanHour: v.optional(v.number()), // 0-23
+
+    // Peak time analysis (hours 0-23)
+    peakCleanHour: v.optional(v.number()),
     peakDirtyHour: v.optional(v.number()),
+
+    // Hourly breakdown (24 hours)
+    hourlyAvg: v.array(v.object({
+      hour: v.number(), // 0-23
+      avgRating: v.number(),
+      count: v.number(),
+    })),
+
+    // Day-of-week breakdown (0-6, Sun-Sat)
+    dailyAvg: v.array(v.object({
+      dayOfWeek: v.number(), // 0-6
+      avgRating: v.number(),
+      count: v.number(),
+    })),
+
+    // Historical trend (last 30 days)
+    trend: v.optional(v.union(
+      v.literal("improving"),
+      v.literal("declining"),
+      v.literal("stable")
+    )),
+    trendPercentage: v.optional(v.number()), // e.g., +15% improving
+
+    // Time-based recommendations
+    bestTimeToVisit: v.optional(v.string()), // "2-4pm (Mon-Fri)"
+    worstTimeToAvoid: v.optional(v.string()), // "8-10am (weekdays)"
+
+    // Recent history for sparkline charts (last 7 days)
+    recentHistory: v.array(v.object({
+      date: v.number(), // timestamp
+      avgRating: v.number(),
+      count: v.number(),
+    })),
+
     lastUpdated: v.number(),
-  }).index("by_location", ["locationId"]),
+  })
+    .index("by_location", ["locationId"])
+    .index("by_last_updated", ["lastUpdated"]),
 });
