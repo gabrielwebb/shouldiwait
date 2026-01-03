@@ -8,9 +8,12 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
+import type * as insights from "../insights.js";
 import type * as locations from "../locations.js";
 import type * as photos from "../photos.js";
 import type * as ratings from "../ratings.js";
+import type * as timezones from "../timezones.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
+  insights: typeof insights;
   locations: typeof locations;
   photos: typeof photos;
   ratings: typeof ratings;
+  timezones: typeof timezones;
 }>;
 
 /**
