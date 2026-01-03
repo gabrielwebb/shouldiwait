@@ -54,11 +54,13 @@ export const calculateInsightsForLocation = internalMutation({
   handler: async (ctx, args) => {
     const { locationId } = args;
 
-    // Fetch location to get timezone
-    const location = await ctx.db.get(locationId);
-    if (!location) {
-      return { success: false, reason: "Location not found" };
-    }
+    try {
+      // Fetch location to get timezone
+      const location = await ctx.db.get(locationId);
+      if (!location) {
+        console.error(`[Insights] Location not found: ${locationId}`);
+        return { success: false, reason: "Location not found" };
+      }
 
     const timezone = location.timezone || "America/New_York"; // Default fallback
 
@@ -178,98 +180,148 @@ export const calculateInsightsForLocation = internalMutation({
       lastUpdated: Date.now(),
     };
 
-    if (existing) {
-      await ctx.db.patch(existing._id, insightData);
-    } else {
-      await ctx.db.insert("cleanlinessInsights", insightData);
-    }
+      if (existing) {
+        await ctx.db.patch(existing._id, insightData);
+      } else {
+        await ctx.db.insert("cleanlinessInsights", insightData);
+      }
 
-    return { success: true, locationId };
+      console.log(`[Insights] Successfully calculated insights for location ${locationId} (${totalRatings} ratings)`);
+      return { success: true, locationId };
+    } catch (error) {
+      console.error(`[Insights] Error calculating insights for ${locationId}:`, error);
+      return { success: false, reason: error instanceof Error ? error.message : "Unknown error" };
+    }
   },
 });
 
 // Internal mutation: Update recently rated locations (hourly cron)
 export const updateRecentlyRatedLocations = internalMutation({
   handler: async (ctx) => {
-    // Find locations with ratings in the last 2 hours
-    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
-    const recentRatings = await ctx.db
-      .query("ratings")
-      .filter((q) => q.gte(q.field("timestamp"), twoHoursAgo))
-      .collect();
+    const startTime = Date.now();
+    console.log('[Insights Cron] Starting hourly update...');
 
-    // Get unique location IDs
-    const locationIds = [...new Set(recentRatings.map((r) => r.locationId))];
+    try {
+      // Find locations with ratings in the last 2 hours
+      const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+      const recentRatings = await ctx.db
+        .query("ratings")
+        .filter((q) => q.gte(q.field("timestamp"), twoHoursAgo))
+        .collect();
 
-    // Schedule recalculation for each location
-    for (const locationId of locationIds) {
-      await ctx.scheduler.runAfter(0, internal.insights.calculateInsightsForLocation, {
-        locationId,
-      });
+      // Get unique location IDs
+      const locationIds = [...new Set(recentRatings.map((r) => r.locationId))];
+
+      console.log(`[Insights Cron] Found ${locationIds.length} locations with recent ratings`);
+
+      // Schedule recalculation for each location
+      for (const locationId of locationIds) {
+        await ctx.scheduler.runAfter(0, internal.insights.calculateInsightsForLocation, {
+          locationId,
+        });
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`[Insights Cron] Hourly update completed in ${duration}ms. Scheduled ${locationIds.length} updates.`);
+
+      return { updatedCount: locationIds.length, durationMs: duration };
+    } catch (error) {
+      console.error('[Insights Cron] Hourly update failed:', error);
+      throw error;
     }
-
-    return { updatedCount: locationIds.length };
   },
 });
 
 // Internal mutation: Recalculate all insights (daily cron) - PAGINATED
 export const recalculateAllInsights = internalMutation({
   handler: async (ctx) => {
-    // Use paginated query to avoid loading all ratings into memory
-    // Process locations in batches of 100
-    const BATCH_SIZE = 100;
-    const locationIds = new Set<string>();
+    const startTime = Date.now();
+    console.log('[Insights Cron] Starting daily full recalculation...');
 
-    // Paginate through ratings to collect unique location IDs
-    let cursor = null;
-    let hasMore = true;
+    try {
+      // Use paginated query to avoid loading all ratings into memory
+      // Process locations in batches of 100
+      const BATCH_SIZE = 100;
+      const locationIds = new Set<string>();
 
-    while (hasMore) {
-      const result = await ctx.db
-        .query("ratings")
-        .paginate({ cursor: cursor || undefined, numItems: 1000 });
+      // Paginate through ratings to collect unique location IDs
+      let cursor = null;
+      let hasMore = true;
+      let pagesProcessed = 0;
 
-      result.page.forEach((rating) => locationIds.add(rating.locationId));
+      while (hasMore) {
+        const result = await ctx.db
+          .query("ratings")
+          .paginate({ cursor: cursor || undefined, numItems: 1000 });
 
-      cursor = result.continueCursor;
-      hasMore = result.isDone === false;
-    }
+        result.page.forEach((rating) => locationIds.add(rating.locationId));
 
-    // Schedule recalculation for each location in batches
-    const locationArray = Array.from(locationIds);
-    for (let i = 0; i < locationArray.length; i += BATCH_SIZE) {
-      const batch = locationArray.slice(i, i + BATCH_SIZE);
+        cursor = result.continueCursor;
+        hasMore = result.isDone === false;
+        pagesProcessed++;
 
-      // Schedule each location in the batch with slight delays to prevent overload
-      for (let j = 0; j < batch.length; j++) {
-        const delay = j * 100; // 100ms delay between each
-        await ctx.scheduler.runAfter(delay, internal.insights.calculateInsightsForLocation, {
-          locationId: batch[j],
-        });
+        if (pagesProcessed % 10 === 0) {
+          console.log(`[Insights Cron] Processed ${pagesProcessed} pages, ${locationIds.size} unique locations so far...`);
+        }
       }
-    }
 
-    return { totalLocations: locationIds.size };
+      console.log(`[Insights Cron] Found ${locationIds.size} total locations across ${pagesProcessed} pages`);
+
+      // Schedule recalculation for each location in batches
+      const locationArray = Array.from(locationIds);
+      for (let i = 0; i < locationArray.length; i += BATCH_SIZE) {
+        const batch = locationArray.slice(i, i + BATCH_SIZE);
+
+        // Schedule each location in the batch with slight delays to prevent overload
+        for (let j = 0; j < batch.length; j++) {
+          const delay = j * 100; // 100ms delay between each
+          await ctx.scheduler.runAfter(delay, internal.insights.calculateInsightsForLocation, {
+            locationId: batch[j],
+          });
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`[Insights Cron] Daily recalculation completed in ${duration}ms. Scheduled ${locationIds.size} updates.`);
+
+      return { totalLocations: locationIds.size, durationMs: duration, pagesProcessed };
+    } catch (error) {
+      console.error('[Insights Cron] Daily recalculation failed:', error);
+      throw error;
+    }
   },
 });
 
 // Internal mutation: Cleanup stale insights (weekly cron)
 export const cleanupStaleInsights = internalMutation({
   handler: async (ctx) => {
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const startTime = Date.now();
+    console.log('[Insights Cron] Starting weekly cleanup...');
 
-    // Find insights not updated in 90 days
-    const staleInsights = await ctx.db
-      .query("cleanlinessInsights")
-      .filter((q) => q.lt(q.field("lastUpdated"), ninetyDaysAgo))
-      .collect();
+    try {
+      const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
 
-    // Delete stale insights
-    for (const insight of staleInsights) {
-      await ctx.db.delete(insight._id);
+      // Find insights not updated in 90 days
+      const staleInsights = await ctx.db
+        .query("cleanlinessInsights")
+        .filter((q) => q.lt(q.field("lastUpdated"), ninetyDaysAgo))
+        .collect();
+
+      console.log(`[Insights Cron] Found ${staleInsights.length} stale insights to delete`);
+
+      // Delete stale insights
+      for (const insight of staleInsights) {
+        await ctx.db.delete(insight._id);
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`[Insights Cron] Weekly cleanup completed in ${duration}ms. Deleted ${staleInsights.length} stale insights.`);
+
+      return { deletedCount: staleInsights.length, durationMs: duration };
+    } catch (error) {
+      console.error('[Insights Cron] Weekly cleanup failed:', error);
+      throw error;
     }
-
-    return { deletedCount: staleInsights.length };
   },
 });
 

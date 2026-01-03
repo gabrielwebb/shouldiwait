@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { detectTimezone } from "./timezones";
 
 // Get nearby locations based on user's current position
 export const getNearby = query({
@@ -27,7 +28,7 @@ export const getById = query({
   },
 });
 
-// Add a new bathroom location
+// Add a new bathroom location (with auto-detected timezone)
 export const add = mutation({
   args: {
     name: v.string(),
@@ -36,6 +37,7 @@ export const add = mutation({
     address: v.string(),
     placeType: v.string(),
     amenities: v.array(v.string()),
+    timezone: v.optional(v.string()), // Optional: can be manually specified
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -45,6 +47,13 @@ export const add = mutation({
 
     const now = Date.now();
 
+    // Auto-detect timezone if not provided
+    const timezone = args.timezone || detectTimezone(
+      args.latitude,
+      args.longitude,
+      args.address
+    );
+
     const locationId = await ctx.db.insert("locations", {
       name: args.name,
       latitude: args.latitude,
@@ -52,6 +61,7 @@ export const add = mutation({
       address: args.address,
       placeType: args.placeType,
       amenities: args.amenities,
+      timezone, // Auto-detected or manual
       createdAt: now,
       updatedAt: now,
     });

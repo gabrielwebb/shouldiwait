@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useLocation } from '@/hooks/useLocation';
 import { LocationPermissionPrompt } from '@/components/LocationPermissionPrompt';
 import { BathroomMap } from '@/components/BathroomMap';
+import { BathroomMapWeb } from '@/components/BathroomMapWeb';
 import { BathroomList } from '@/components/BathroomList';
 import { ViewToggle } from '@/components/ViewToggle';
 import { getMockBathroomsNearby } from '@/constants/MockBathrooms';
@@ -97,6 +98,18 @@ export default function Index() {
               onBathroomPress={(bathroom) => {
                 setSelectedBathroom(bathroom);
                 console.log('Selected bathroom:', bathroom.name);
+              }}
+            />
+          ) : Platform.OS === 'web' ? (
+            <BathroomMapWeb
+              userLocation={location}
+              bathrooms={nearbyBathrooms}
+              onMarkerPress={(bathroom) => {
+                setSelectedBathroom(bathroom);
+                console.log('Selected bathroom:', bathroom.name);
+              }}
+              onMapPress={() => {
+                setSelectedBathroom(null);
               }}
             />
           ) : (
