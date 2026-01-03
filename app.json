@@ -55,7 +55,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Should I Wait? to use your location to find nearby bathrooms."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
