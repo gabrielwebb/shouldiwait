@@ -9,6 +9,7 @@ export default defineSchema({
     address: v.string(),
     placeType: v.string(), // e.g., "restaurant", "cafe", "gas_station"
     amenities: v.array(v.string()), // e.g., ["wheelchair_accessible", "changing_table"]
+    timezone: v.string(), // IANA timezone e.g., "America/Los_Angeles"
     createdAt: v.number(),
     updatedAt: v.number(),
   })

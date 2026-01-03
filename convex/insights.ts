@@ -54,6 +54,14 @@ export const calculateInsightsForLocation = internalMutation({
   handler: async (ctx, args) => {
     const { locationId } = args;
 
+    // Fetch location to get timezone
+    const location = await ctx.db.get(locationId);
+    if (!location) {
+      return { success: false, reason: "Location not found" };
+    }
+
+    const timezone = location.timezone || "America/New_York"; // Default fallback
+
     // Fetch all ratings for this location (last 90 days)
     const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
     const ratings = await ctx.db
@@ -72,16 +80,16 @@ export const calculateInsightsForLocation = internalMutation({
     const avgCleanliness = ratings.reduce((sum, r) => sum + r.cleanliness, 0) / ratings.length;
     const totalRatings = ratings.length;
 
-    // 2. Hourly breakdown (bucket by hour 0-23)
+    // 2. Hourly breakdown (bucket by hour 0-23 in LOCATION'S timezone)
     const hourlyBuckets = new Array(24).fill(null).map((_, hour) => ({
       hour,
       ratings: [] as number[],
     }));
 
     ratings.forEach((rating) => {
-      const date = new Date(rating.timestamp);
-      const hour = date.getUTCHours();
-      hourlyBuckets[hour].ratings.push(rating.cleanliness);
+      // Convert UTC timestamp to location's local time
+      const localHour = getLocalHour(rating.timestamp, timezone);
+      hourlyBuckets[localHour].ratings.push(rating.cleanliness);
     });
 
     const hourlyAvg = hourlyBuckets.map((bucket) => ({
@@ -101,16 +109,16 @@ export const calculateInsightsForLocation = internalMutation({
       ? validHours.reduce((min, h) => (h.avgRating < min.avgRating ? h : min)).hour
       : undefined;
 
-    // 4. Daily breakdown (day of week 0-6, Sun-Sat)
+    // 4. Daily breakdown (day of week 0-6, Sun-Sat in LOCATION'S timezone)
     const dailyBuckets = new Array(7).fill(null).map((_, day) => ({
       dayOfWeek: day,
       ratings: [] as number[],
     }));
 
     ratings.forEach((rating) => {
-      const date = new Date(rating.timestamp);
-      const dayOfWeek = date.getUTCDay();
-      dailyBuckets[dayOfWeek].ratings.push(rating.cleanliness);
+      // Convert UTC timestamp to location's local day
+      const localDay = getLocalDayOfWeek(rating.timestamp, timezone);
+      dailyBuckets[localDay].ratings.push(rating.cleanliness);
     });
 
     const dailyAvg = dailyBuckets.map((bucket) => ({
@@ -204,21 +212,44 @@ export const updateRecentlyRatedLocations = internalMutation({
   },
 });
 
-// Internal mutation: Recalculate all insights (daily cron)
+// Internal mutation: Recalculate all insights (daily cron) - PAGINATED
 export const recalculateAllInsights = internalMutation({
   handler: async (ctx) => {
-    // Get all locations with at least one rating
-    const allRatings = await ctx.db.query("ratings").collect();
-    const locationIds = [...new Set(allRatings.map((r) => r.locationId))];
+    // Use paginated query to avoid loading all ratings into memory
+    // Process locations in batches of 100
+    const BATCH_SIZE = 100;
+    const locationIds = new Set<string>();
 
-    // Schedule recalculation for each location
-    for (const locationId of locationIds) {
-      await ctx.scheduler.runAfter(0, internal.insights.calculateInsightsForLocation, {
-        locationId,
-      });
+    // Paginate through ratings to collect unique location IDs
+    let cursor = null;
+    let hasMore = true;
+
+    while (hasMore) {
+      const result = await ctx.db
+        .query("ratings")
+        .paginate({ cursor: cursor || undefined, numItems: 1000 });
+
+      result.page.forEach((rating) => locationIds.add(rating.locationId));
+
+      cursor = result.continueCursor;
+      hasMore = result.isDone === false;
     }
 
-    return { totalLocations: locationIds.length };
+    // Schedule recalculation for each location in batches
+    const locationArray = Array.from(locationIds);
+    for (let i = 0; i < locationArray.length; i += BATCH_SIZE) {
+      const batch = locationArray.slice(i, i + BATCH_SIZE);
+
+      // Schedule each location in the batch with slight delays to prevent overload
+      for (let j = 0; j < batch.length; j++) {
+        const delay = j * 100; // 100ms delay between each
+        await ctx.scheduler.runAfter(delay, internal.insights.calculateInsightsForLocation, {
+          locationId: batch[j],
+        });
+      }
+    }
+
+    return { totalLocations: locationIds.size };
   },
 });
 
@@ -344,4 +375,35 @@ function generateRecentHistory(
   }
 
   return filledHistory;
+}
+
+// Helper: Get local hour from UTC timestamp using timezone
+function getLocalHour(utcTimestamp: number, timezone: string): number {
+  // Use Intl.DateTimeFormat to convert UTC to local timezone
+  const date = new Date(utcTimestamp);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: 'numeric',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const hourPart = parts.find(p => p.type === 'hour');
+  return hourPart ? parseInt(hourPart.value, 10) : date.getUTCHours();
+}
+
+// Helper: Get local day of week from UTC timestamp using timezone
+function getLocalDayOfWeek(utcTimestamp: number, timezone: string): number {
+  const date = new Date(utcTimestamp);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+  });
+
+  const dayName = formatter.format(date);
+  const dayMap: Record<string, number> = {
+    'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+  };
+
+  return dayMap[dayName] ?? date.getUTCDay();
 }
