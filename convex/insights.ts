@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 // Public query: Get insights for a specific location
 export const getByLocation = query({
@@ -242,7 +243,7 @@ export const recalculateAllInsights = internalMutation({
       // Use paginated query to avoid loading all ratings into memory
       // Process locations in batches of 100
       const BATCH_SIZE = 100;
-      const locationIds = new Set<string>();
+      const locationIds = new Set<Id<"locations">>();
 
       // Paginate through ratings to collect unique location IDs
       let cursor = null;
@@ -252,7 +253,7 @@ export const recalculateAllInsights = internalMutation({
       while (hasMore) {
         const result = await ctx.db
           .query("ratings")
-          .paginate({ cursor: cursor || undefined, numItems: 1000 });
+          .paginate({ cursor: cursor ?? null, numItems: 1000 });
 
         result.page.forEach((rating) => locationIds.add(rating.locationId));
 

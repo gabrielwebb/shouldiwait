@@ -9,7 +9,8 @@
       "@/components/*": ["./components/*"],
       "@/utils/*": ["./utils/*"],
       "@/constants/*": ["./constants/*"],
-      "@/types/*": ["./types/*"]
+      "@/types/*": ["./types/*"],
+      "@/convex/*": ["./convex/*"]
     }
   },
   "include": [
