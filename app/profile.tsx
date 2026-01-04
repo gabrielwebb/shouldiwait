@@ -2,8 +2,11 @@ import { View, Text, StyleSheet, Pressable, useColorScheme, Platform, ScrollView
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { getBackgroundColor, getTextColor, Yellow, Special, Gray } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TrustBadge } from '@/components/TrustBadge';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
@@ -11,6 +14,12 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { signOut } = useAuth();
+
+  // Fetch user's trust score and reputation stats
+  const trustScore = useQuery(
+    api.reputation.getUserTrustScore,
+    user ? { userId: user.id } : "skip"
+  );
 
   const handleSignOut = () => {
     Alert.alert(
@@ -91,13 +100,63 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Reputation Section */}
+        {trustScore && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: getTextColor(isDark, 'secondary') }]}>
+              YOUR REPUTATION
+            </Text>
+            <View style={[styles.reputationCard, { backgroundColor: getBackgroundColor(isDark, true) }]}>
+              <TrustBadge
+                badge={trustScore.badge}
+                trustPercentage={trustScore.trustPercentage}
+                totalRatings={trustScore.totalRatings}
+                isDark={isDark}
+                compact={false}
+              />
+              {trustScore.trustPercentage !== null && (
+                <View style={styles.voteStats}>
+                  <View style={styles.voteStat}>
+                    <Text style={[styles.voteStatValue, { color: '#34C759' }]}>
+                      {trustScore.helpfulVotes}
+                    </Text>
+                    <Text style={[styles.voteStatLabel, { color: getTextColor(isDark, 'secondary') }]}>
+                      Helpful votes
+                    </Text>
+                  </View>
+                  <View style={styles.voteStat}>
+                    <Text style={[styles.voteStatValue, { color: '#FF453A' }]}>
+                      {trustScore.notHelpfulVotes}
+                    </Text>
+                    <Text style={[styles.voteStatLabel, { color: getTextColor(isDark, 'secondary') }]}>
+                      Not helpful votes
+                    </Text>
+                  </View>
+                </View>
+              )}
+              {trustScore.trustPercentage === null && trustScore.totalRatings > 0 && (
+                <Text style={[styles.reputationHint, { color: getTextColor(isDark, 'tertiary') }]}>
+                  {trustScore.totalRatings < 5
+                    ? `${5 - trustScore.totalRatings} more ${5 - trustScore.totalRatings === 1 ? 'review' : 'reviews'} to unlock New Reviewer badge`
+                    : `${10 - (trustScore.helpfulVotes + trustScore.notHelpfulVotes)} more votes needed to show trust score`}
+                </Text>
+              )}
+              {trustScore.totalRatings === 0 && (
+                <Text style={[styles.reputationHint, { color: getTextColor(isDark, 'tertiary') }]}>
+                  Leave your first review to start building your reputation!
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Stats Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: getTextColor(isDark, 'secondary') }]}>
             YOUR ACTIVITY
           </Text>
           <View style={[styles.statsGrid, { backgroundColor: getBackgroundColor(isDark, true) }]}>
-            <StatItem label="Ratings" value="0" isDark={isDark} />
+            <StatItem label="Ratings" value={trustScore?.totalRatings?.toString() || "0"} isDark={isDark} />
             <StatItem label="Reviews" value="0" isDark={isDark} />
             <StatItem label="Photos" value="0" isDark={isDark} />
           </View>
@@ -289,6 +348,46 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginBottom: 8,
     letterSpacing: 0.5,
+  },
+  reputationCard: {
+    marginHorizontal: 20,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  voteStats: {
+    flexDirection: 'row',
+    gap: 24,
+    marginTop: 8,
+  },
+  voteStat: {
+    alignItems: 'center',
+  },
+  voteStatValue: {
+    fontSize: Platform.select({ ios: 24, android: 22 }),
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  voteStatLabel: {
+    fontSize: Platform.select({ ios: 13, android: 12 }),
+  },
+  reputationHint: {
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
   statsGrid: {
     marginHorizontal: 20,

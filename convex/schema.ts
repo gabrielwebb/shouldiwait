@@ -23,6 +23,8 @@ export default defineSchema({
     review: v.optional(v.string()),
     timestamp: v.number(),
     createdAt: v.number(),
+    helpfulVotes: v.number(), // Count of helpful votes
+    notHelpfulVotes: v.number(), // Count of not helpful votes
   })
     .index("by_location", ["locationId"])
     .index("by_user", ["userId"])
@@ -86,4 +88,14 @@ export default defineSchema({
   })
     .index("by_location", ["locationId"])
     .index("by_last_updated", ["lastUpdated"]),
+
+  reviewVotes: defineTable({
+    ratingId: v.id("ratings"),
+    voterId: v.string(), // Clerk user ID
+    isHelpful: v.boolean(), // true = helpful, false = not helpful
+    timestamp: v.number(),
+  })
+    .index("by_rating", ["ratingId"])
+    .index("by_voter", ["voterId"])
+    .index("by_voter_and_rating", ["voterId", "ratingId"]),
 });

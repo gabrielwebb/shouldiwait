@@ -7,6 +7,7 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { getTextColor, getBackgroundColor, getBlue, Yellow } from '@/constants/Colors';
 import { CleanlinessInsightsCard } from '@/components/insights/CleanlinessInsightsCard';
+import { ReviewCard } from '@/components/ReviewCard';
 
 export default function BathroomDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,6 +18,9 @@ export default function BathroomDetailScreen() {
   // In a real app, this would fetch the location from Convex
   // For now, we'll show a placeholder with the insights card
   const locationId = id as Id<'locations'>;
+
+  // Fetch reviews with trust scores
+  const reviews = useQuery(api.reputation.getRatingsWithTrust, { locationId });
 
   const handleNavigate = () => {
     // In real implementation, would get actual coordinates
@@ -94,13 +98,36 @@ export default function BathroomDetailScreen() {
         </View>
 
         {/* Recent Reviews Section */}
-        <View style={[styles.section, { backgroundColor: getBackgroundColor(isDark, true) }]}>
+        <View style={styles.reviewsSection}>
           <Text style={[styles.sectionTitle, { color: getTextColor(isDark) }]}>
             Recent Reviews
           </Text>
-          <Text style={[styles.comingSoon, { color: getTextColor(isDark, 'tertiary') }]}>
-            Reviews coming soon...
-          </Text>
+          {reviews === undefined ? (
+            <Text style={[styles.loadingText, { color: getTextColor(isDark, 'tertiary') }]}>
+              Loading reviews...
+            </Text>
+          ) : reviews.length === 0 ? (
+            <View style={[styles.emptyState, { backgroundColor: getBackgroundColor(isDark, true) }]}>
+              <Text style={[styles.emptyStateText, { color: getTextColor(isDark, 'tertiary') }]}>
+                No reviews yet. Be the first to rate this bathroom!
+              </Text>
+            </View>
+          ) : (
+            reviews.map((review) => (
+              <ReviewCard
+                key={review._id}
+                ratingId={review._id}
+                cleanliness={review.cleanliness}
+                review={review.review}
+                timestamp={review.timestamp}
+                helpfulVotes={review.helpfulVotes}
+                notHelpfulVotes={review.notHelpfulVotes}
+                authorTrustPercentage={review.authorTrustPercentage}
+                authorBadge={review.authorBadge}
+                authorTotalRatings={review.authorTotalRatings}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -219,8 +246,33 @@ const styles = StyleSheet.create({
     fontSize: Platform.select({ ios: 15, android: 14 }),
     marginBottom: 4,
   },
-  comingSoon: {
+  reviewsSection: {
+    gap: 12,
+  },
+  loadingText: {
     fontSize: Platform.select({ ios: 15, android: 14 }),
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  emptyState: {
+    borderRadius: Platform.select({ ios: 16, android: 12 }),
+    padding: 24,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  emptyStateText: {
+    fontSize: Platform.select({ ios: 15, android: 14 }),
+    textAlign: 'center',
     fontStyle: 'italic',
   },
 });

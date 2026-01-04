@@ -58,6 +58,8 @@ export const submit = mutation({
       review: args.review,
       timestamp: now,
       createdAt: now,
+      helpfulVotes: 0,
+      notHelpfulVotes: 0,
     });
 
     return ratingId;

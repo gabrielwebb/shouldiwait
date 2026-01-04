@@ -13,6 +13,7 @@ import type * as insights from "../insights.js";
 import type * as locations from "../locations.js";
 import type * as photos from "../photos.js";
 import type * as ratings from "../ratings.js";
+import type * as reputation from "../reputation.js";
 import type * as timezones from "../timezones.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   locations: typeof locations;
   photos: typeof photos;
   ratings: typeof ratings;
+  reputation: typeof reputation;
   timezones: typeof timezones;
 }>;
 
