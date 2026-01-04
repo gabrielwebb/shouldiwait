@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Platform, useColorScheme, Pressable, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, useColorScheme, Pressable, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,12 +8,14 @@ import { Id } from '@/convex/_generated/dataModel';
 import { getTextColor, getBackgroundColor, getBlue, Yellow } from '@/constants/Colors';
 import { CleanlinessInsightsCard } from '@/components/insights/CleanlinessInsightsCard';
 import { ReviewCard } from '@/components/ReviewCard';
+import { useState, useEffect } from 'react';
 
 export default function BathroomDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [hasLoadingTimedOut, setHasLoadingTimedOut] = useState(false);
 
   // In a real app, this would fetch the location from Convex
   // For now, we'll show a placeholder with the insights card
@@ -21,6 +23,19 @@ export default function BathroomDetailScreen() {
 
   // Fetch reviews with trust scores
   const reviews = useQuery(api.reputation.getRatingsWithTrust, { locationId });
+
+  // Detect if query has been loading too long (likely an error)
+  useEffect(() => {
+    if (reviews === undefined) {
+      const timeout = setTimeout(() => {
+        setHasLoadingTimedOut(true);
+      }, 10000); // 10 seconds timeout
+
+      return () => clearTimeout(timeout);
+    } else {
+      setHasLoadingTimedOut(false);
+    }
+  }, [reviews]);
 
   const handleNavigate = () => {
     // In real implementation, would get actual coordinates
@@ -102,10 +117,32 @@ export default function BathroomDetailScreen() {
           <Text style={[styles.sectionTitle, { color: getTextColor(isDark) }]}>
             Recent Reviews
           </Text>
-          {reviews === undefined ? (
-            <Text style={[styles.loadingText, { color: getTextColor(isDark, 'tertiary') }]}>
-              Loading reviews...
-            </Text>
+          {reviews === undefined && hasLoadingTimedOut ? (
+            <View style={[styles.errorState, { backgroundColor: getBackgroundColor(isDark, true) }]}>
+              <Text style={[styles.errorText, { color: getTextColor(isDark) }]}>
+                Unable to load reviews. Please check your connection and try again.
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setHasLoadingTimedOut(false);
+                  router.replace(`/bathroom/${id}`);
+                }}
+                style={({ pressed }) => [
+                  styles.retryButton,
+                  { backgroundColor: getBlue(isDark) },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : reviews === undefined ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator size="large" color={getBlue(isDark)} />
+              <Text style={[styles.loadingText, { color: getTextColor(isDark, 'tertiary') }]}>
+                Loading reviews...
+              </Text>
+            </View>
           ) : reviews.length === 0 ? (
             <View style={[styles.emptyState, { backgroundColor: getBackgroundColor(isDark, true) }]}>
               <Text style={[styles.emptyStateText, { color: getTextColor(isDark, 'tertiary') }]}>
@@ -249,10 +286,47 @@ const styles = StyleSheet.create({
   reviewsSection: {
     gap: 12,
   },
+  loadingState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
   loadingText: {
     fontSize: Platform.select({ ios: 15, android: 14 }),
     textAlign: 'center',
-    paddingVertical: 20,
+  },
+  errorState: {
+    borderRadius: Platform.select({ ios: 16, android: 12 }),
+    padding: 24,
+    alignItems: 'center',
+    gap: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  errorText: {
+    fontSize: Platform.select({ ios: 15, android: 14 }),
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: Platform.select({ ios: 12, android: 8 }),
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: Platform.select({ ios: 16, android: 14 }),
+    fontWeight: '600',
   },
   emptyState: {
     borderRadius: Platform.select({ ios: 16, android: 12 }),
