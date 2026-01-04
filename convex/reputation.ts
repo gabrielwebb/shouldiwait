@@ -189,43 +189,53 @@ export const getRatingsWithTrust = query({
       .withIndex("by_location", (q) => q.eq("locationId", args.locationId))
       .collect();
 
-    // For each rating, calculate the author's trust score
-    const ratingsWithTrust = await Promise.all(
-      ratings.map(async (rating) => {
+    // Get unique user IDs to batch-fetch their ratings
+    const uniqueUserIds = [...new Set(ratings.map(r => r.userId))];
+
+    // Batch-fetch all ratings for all unique users (1 query per user instead of 1 per rating)
+    const userRatingsMap = new Map<string, typeof ratings>();
+    await Promise.all(
+      uniqueUserIds.map(async (userId) => {
         const userRatings = await ctx.db
           .query("ratings")
-          .withIndex("by_user", (q) => q.eq("userId", rating.userId))
+          .withIndex("by_user", (q) => q.eq("userId", userId))
           .collect();
-
-        const totalHelpful = userRatings.reduce((sum, r) => sum + r.helpfulVotes, 0);
-        const totalNotHelpful = userRatings.reduce((sum, r) => sum + r.notHelpfulVotes, 0);
-        const totalVotes = totalHelpful + totalNotHelpful;
-
-        let authorTrustPercentage: number | null = null;
-        let authorBadge: string | null = null;
-
-        if (totalVotes >= 10) {
-          authorTrustPercentage = Math.round((totalHelpful / totalVotes) * 100);
-
-          if (userRatings.length >= 250 && authorTrustPercentage >= 90) {
-            authorBadge = "cleanliness_expert";
-          } else if (userRatings.length >= 100 && authorTrustPercentage >= 80) {
-            authorBadge = "trusted_reviewer";
-          } else if (userRatings.length >= 50 && authorTrustPercentage >= 70) {
-            authorBadge = "regular_contributor";
-          }
-        } else if (userRatings.length >= 5) {
-          authorBadge = "new_reviewer";
-        }
-
-        return {
-          ...rating,
-          authorTrustPercentage,
-          authorBadge,
-          authorTotalRatings: userRatings.length,
-        };
+        userRatingsMap.set(userId, userRatings);
       })
     );
+
+    // Calculate trust scores using cached user ratings
+    const ratingsWithTrust = ratings.map((rating) => {
+      const userRatings = userRatingsMap.get(rating.userId) || [];
+
+      const totalHelpful = userRatings.reduce((sum, r) => sum + r.helpfulVotes, 0);
+      const totalNotHelpful = userRatings.reduce((sum, r) => sum + r.notHelpfulVotes, 0);
+      const totalVotes = totalHelpful + totalNotHelpful;
+
+      let authorTrustPercentage: number | null = null;
+      let authorBadge: string | null = null;
+
+      if (totalVotes >= 10) {
+        authorTrustPercentage = Math.round((totalHelpful / totalVotes) * 100);
+
+        if (userRatings.length >= 250 && authorTrustPercentage >= 90) {
+          authorBadge = "cleanliness_expert";
+        } else if (userRatings.length >= 100 && authorTrustPercentage >= 80) {
+          authorBadge = "trusted_reviewer";
+        } else if (userRatings.length >= 50 && authorTrustPercentage >= 70) {
+          authorBadge = "regular_contributor";
+        }
+      } else if (userRatings.length >= 5) {
+        authorBadge = "new_reviewer";
+      }
+
+      return {
+        ...rating,
+        authorTrustPercentage,
+        authorBadge,
+        authorTotalRatings: userRatings.length,
+      };
+    });
 
     // Sort by trust score (highest first), then by helpful votes, then by date
     return ratingsWithTrust.sort((a, b) => {
