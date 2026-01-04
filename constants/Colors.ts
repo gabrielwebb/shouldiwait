@@ -92,6 +92,7 @@ export const Special = {
     light: '#F0FDF4',       // Light success background
     dark: '#1A3A1A',        // Dark success background
   },
+  destructive: '#FF453A',   // Destructive action color (iOS red)
 } as const;
 
 /**
