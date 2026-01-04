@@ -3,6 +3,7 @@ import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { ConvexReactClient } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
+import { AuthWrapper } from '@/components/AuthWrapper';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL!;
@@ -40,9 +41,22 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-          </Stack>
+          <AuthWrapper>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="bathroom/[id]"
+                options={{
+                  headerShown: true,
+                  headerTitle: 'Bathroom Details',
+                  headerBackTitle: 'Back',
+                }}
+              />
+            </Stack>
+          </AuthWrapper>
         </ConvexProviderWithClerk>
       </ClerkLoaded>
     </ClerkProvider>

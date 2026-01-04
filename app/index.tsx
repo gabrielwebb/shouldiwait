@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform, useColorScheme, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { useLocation } from '@/hooks/useLocation';
 import { LocationPermissionPrompt } from '@/components/LocationPermissionPrompt';
 import { BathroomMap } from '@/components/BathroomMap';
@@ -14,6 +15,7 @@ import * as Location from 'expo-location';
 import { getBackgroundColor, getTextColor, getBlue, Special, Yellow } from '@/constants/Colors';
 
 export default function Index() {
+  const router = useRouter();
   const { location, error, loading, permissionStatus, requestPermission, refreshLocation } = useLocation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -75,14 +77,28 @@ export default function Index() {
       <View style={styles.content}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: getBackgroundColor(isDark) }]}>
-          <Text style={[styles.title, { color: getTextColor(isDark) }]}>
-            Should I Wait? 🚽
-          </Text>
-          <Text style={[styles.subtitle, { color: getTextColor(isDark, 'secondary') }]}>
-            {nearbyBathrooms.length > 0
-              ? `✨ ${nearbyBathrooms.length} clean ${nearbyBathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby`
-              : 'Finding bathrooms nearby...'}
-          </Text>
+          <View style={styles.headerContent}>
+            <View style={styles.headerText}>
+              <Text style={[styles.title, { color: getTextColor(isDark) }]}>
+                Should I Wait? 🚽
+              </Text>
+              <Text style={[styles.subtitle, { color: getTextColor(isDark, 'secondary') }]}>
+                {nearbyBathrooms.length > 0
+                  ? `✨ ${nearbyBathrooms.length} clean ${nearbyBathrooms.length === 1 ? 'bathroom' : 'bathrooms'} nearby`
+                  : 'Finding bathrooms nearby...'}
+              </Text>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.profileButton,
+                { backgroundColor: Yellow.primary },
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => router.push('/profile')}
+            >
+              <Text style={styles.profileIcon}>👤</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* View Toggle */}
@@ -161,9 +177,16 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerText: {
+    flex: 1,
     paddingTop: Platform.select({ ios: 8, android: 16 }),
     paddingBottom: 12,
-    zIndex: 10,
   },
   title: {
     fontSize: Platform.select({ ios: 28, android: 24 }),
@@ -174,6 +197,17 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: Platform.select({ ios: 15, android: 14 }),
     fontWeight: '500',
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Platform.select({ ios: 8, android: 16 }),
+  },
+  profileIcon: {
+    fontSize: 24,
   },
   viewContainer: {
     flex: 1,
