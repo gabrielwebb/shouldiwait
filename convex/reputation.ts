@@ -18,6 +18,15 @@ export const voteOnReview = mutation({
       throw new Error("Must be signed in to vote on reviews");
     }
 
+    // Prevent users from voting on their own reviews
+    const rating = await ctx.db.get(args.ratingId);
+    if (!rating) {
+      throw new Error("Rating not found");
+    }
+    if (rating.userId === identity.subject) {
+      throw new Error("Cannot vote on your own review");
+    }
+
     // Check if user already voted on this review
     const existingVote = await ctx.db
       .query("reviewVotes")
@@ -34,21 +43,21 @@ export const voteOnReview = mutation({
           timestamp: Date.now(),
         });
 
-        // Update rating counters
-        const rating = await ctx.db.get(args.ratingId);
-        if (!rating) throw new Error("Rating not found");
+        // Re-fetch rating immediately before update to minimize race window
+        const freshRating = await ctx.db.get(args.ratingId);
+        if (!freshRating) throw new Error("Rating was deleted");
 
         if (args.isHelpful) {
           // Changed from not helpful to helpful
           await ctx.db.patch(args.ratingId, {
-            helpfulVotes: rating.helpfulVotes + 1,
-            notHelpfulVotes: Math.max(0, rating.notHelpfulVotes - 1),
+            helpfulVotes: freshRating.helpfulVotes + 1,
+            notHelpfulVotes: Math.max(0, freshRating.notHelpfulVotes - 1),
           });
         } else {
           // Changed from helpful to not helpful
           await ctx.db.patch(args.ratingId, {
-            helpfulVotes: Math.max(0, rating.helpfulVotes - 1),
-            notHelpfulVotes: rating.notHelpfulVotes + 1,
+            helpfulVotes: Math.max(0, freshRating.helpfulVotes - 1),
+            notHelpfulVotes: freshRating.notHelpfulVotes + 1,
           });
         }
       }
@@ -63,17 +72,18 @@ export const voteOnReview = mutation({
       timestamp: Date.now(),
     });
 
-    // Update rating counters
-    const rating = await ctx.db.get(args.ratingId);
-    if (!rating) throw new Error("Rating not found");
+    // Re-fetch rating immediately before update to minimize race window
+    const freshRating = await ctx.db.get(args.ratingId);
+    if (!freshRating) throw new Error("Rating was deleted");
 
+    // Update rating counters
     if (args.isHelpful) {
       await ctx.db.patch(args.ratingId, {
-        helpfulVotes: rating.helpfulVotes + 1,
+        helpfulVotes: freshRating.helpfulVotes + 1,
       });
     } else {
       await ctx.db.patch(args.ratingId, {
-        notHelpfulVotes: rating.notHelpfulVotes + 1,
+        notHelpfulVotes: freshRating.notHelpfulVotes + 1,
       });
     }
 
