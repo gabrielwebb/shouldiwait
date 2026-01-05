@@ -424,7 +424,7 @@ export const seedBathrooms = action({
 /**
  * Internal mutation to clear all data from a table
  */
-const clearTable = internalMutation({
+export const clearTable = internalMutation({
   args: {
     tableName: v.string(),
   },
