@@ -16,15 +16,20 @@ export default function BathroomDetailScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [hasLoadingTimedOut, setHasLoadingTimedOut] = useState(false);
+  const [hasLocationTimedOut, setHasLocationTimedOut] = useState(false);
 
-  // In a real app, this would fetch the location from Convex
-  // For now, we'll show a placeholder with the insights card
   const locationId = id as Id<'locations'>;
+
+  // Fetch location details from Convex
+  const location = useQuery(api.locations.getById, { id: locationId });
+
+  // Fetch cleanliness insights
+  const insights = useQuery(api.insights.getByLocation, { locationId });
 
   // Fetch reviews with trust scores
   const reviews = useQuery(api.reputation.getRatingsWithTrust, { locationId });
 
-  // Detect if query has been loading too long (likely an error)
+  // Detect if review query has been loading too long (likely an error)
   useEffect(() => {
     if (reviews === undefined) {
       const timeout = setTimeout(() => {
@@ -37,12 +42,26 @@ export default function BathroomDetailScreen() {
     }
   }, [reviews]);
 
+  // Detect if location query has been loading too long
+  useEffect(() => {
+    if (location === undefined) {
+      const timeout = setTimeout(() => {
+        setHasLocationTimedOut(true);
+      }, 10000); // 10 seconds timeout
+
+      return () => clearTimeout(timeout);
+    } else {
+      setHasLocationTimedOut(false);
+    }
+  }, [location]);
+
   const handleNavigate = () => {
-    // In real implementation, would get actual coordinates
-    const label = 'Bathroom Location';
+    if (!location) return;
+
+    const label = encodeURIComponent(location.name);
     const url = Platform.select({
-      ios: `maps:0,0?q=${label}@37.7749,-122.4194`,
-      android: `geo:0,0?q=37.7749,-122.4194(${label})`,
+      ios: `maps:0,0?q=${label}@${location.latitude},${location.longitude}`,
+      android: `geo:0,0?q=${location.latitude},${location.longitude}(${label})`,
     });
 
     if (url) {
@@ -67,50 +86,68 @@ export default function BathroomDetailScreen() {
           </Pressable>
 
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: getTextColor(isDark) }]}>
-              Bathroom Details
-            </Text>
-            <Text style={[styles.address, { color: getTextColor(isDark, 'secondary') }]}>
-              123 Sample St, San Francisco, CA
-            </Text>
+            {location === undefined && hasLocationTimedOut ? (
+              <Text style={[styles.title, { color: getTextColor(isDark) }]}>
+                Error Loading Location
+              </Text>
+            ) : location === undefined ? (
+              <Text style={[styles.title, { color: getTextColor(isDark) }]}>
+                Loading...
+              </Text>
+            ) : location ? (
+              <>
+                <Text style={[styles.title, { color: getTextColor(isDark) }]}>
+                  {location.name}
+                </Text>
+                <Text style={[styles.address, { color: getTextColor(isDark, 'secondary') }]}>
+                  {location.address}
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.title, { color: getTextColor(isDark) }]}>
+                Location Not Found
+              </Text>
+            )}
           </View>
         </View>
 
         {/* Navigate Button */}
-        <Pressable
-          onPress={handleNavigate}
-          style={({ pressed }) => [
-            styles.navigateButton,
-            { backgroundColor: Yellow.primary },
-            pressed && { opacity: 0.8 },
-          ]}
-        >
-          <Text style={styles.navigateIcon}>🧭</Text>
-          <Text style={styles.navigateText}>Get Directions</Text>
-        </Pressable>
+        {location && (
+          <Pressable
+            onPress={handleNavigate}
+            style={({ pressed }) => [
+              styles.navigateButton,
+              { backgroundColor: Yellow.primary },
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Text style={styles.navigateIcon}>🧭</Text>
+            <Text style={styles.navigateText}>Get Directions</Text>
+          </Pressable>
+        )}
 
         {/* Cleanliness Insights Card */}
-        <View style={styles.insightsContainer}>
-          <CleanlinessInsightsCard locationId={locationId} />
-        </View>
+        {insights && (
+          <View style={styles.insightsContainer}>
+            <CleanlinessInsightsCard locationId={locationId} />
+          </View>
+        )}
 
         {/* Amenities Section */}
-        <View style={[styles.section, { backgroundColor: getBackgroundColor(isDark, true) }]}>
-          <Text style={[styles.sectionTitle, { color: getTextColor(isDark) }]}>
-            Amenities
-          </Text>
-          <View style={styles.amenitiesList}>
-            <Text style={[styles.amenityItem, { color: getTextColor(isDark, 'secondary') }]}>
-              ♿ Wheelchair Accessible
+        {location && location.amenities && location.amenities.length > 0 && (
+          <View style={[styles.section, { backgroundColor: getBackgroundColor(isDark, true) }]}>
+            <Text style={[styles.sectionTitle, { color: getTextColor(isDark) }]}>
+              Amenities
             </Text>
-            <Text style={[styles.amenityItem, { color: getTextColor(isDark, 'secondary') }]}>
-              👶 Baby Changing Station
-            </Text>
-            <Text style={[styles.amenityItem, { color: getTextColor(isDark, 'secondary') }]}>
-              🚻 Gender Neutral
-            </Text>
+            <View style={styles.amenitiesList}>
+              {location.amenities.map((amenity, index) => (
+                <Text key={index} style={[styles.amenityItem, { color: getTextColor(isDark, 'secondary') }]}>
+                  • {amenity}
+                </Text>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Recent Reviews Section */}
         <View style={styles.reviewsSection}>
