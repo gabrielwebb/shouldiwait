@@ -14,6 +14,7 @@ import type * as locations from "../locations.js";
 import type * as photos from "../photos.js";
 import type * as ratings from "../ratings.js";
 import type * as reputation from "../reputation.js";
+import type * as seed from "../seed.js";
 import type * as timezones from "../timezones.js";
 
 import type {
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   photos: typeof photos;
   ratings: typeof ratings;
   reputation: typeof reputation;
+  seed: typeof seed;
   timezones: typeof timezones;
 }>;
 
